@@ -86,3 +86,7 @@ def main():
   
         pygame.display.update()
         clock.tick(FPS)  # Adjusting the frame rate
+
+if __name__ == "__main__":
+	main()
+	pygame.quit()
