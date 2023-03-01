@@ -35,8 +35,8 @@ class Drone:
   
     def update(self, displacement_x, displacement_y):
         # Update Positions based on Input and Disturbances
-        self.pos_x += displacement_x + self.disturbance_x * (1 - 2*np.random.random())
-        self.pos_y += displacement_y + self.disturbance_y * (1 - 2*np.random.random())
+        self.pos_x += displacement_x + self.disturbance_x * (0.75 - 2*np.random.random())
+        self.pos_y += displacement_y + self.disturbance_y * (0.75 - 2*np.random.random())
         
         # Confine to Window
         self.pos_x = max(min(WIDTH, self.pos_x), 0)
@@ -54,10 +54,15 @@ def main():
     running = True
   
     # Defining the objects
-    drone = Drone(pos_x=WIDTH//2, pos_y=HEIGHT//2, disturbance_x=0, disturbance_y=0, radius=7, color=WHITE)
+    drone = Drone(pos_x=WIDTH//2, pos_y=HEIGHT//2, disturbance_x=0, disturbance_y=4, radius=7, color=WHITE)
   
+    x_displacement = 0
+    y_displacement = 0
+
     while running:
         screen.fill(BLACK)
+
+        
   
         # Event handling
         for event in pygame.event.get():
