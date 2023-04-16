@@ -26,8 +26,6 @@ INTERACTION_RESET = 100
 MAX_DISTANCE = np.sqrt(WIDTH**2 + HEIGHT**2)
 MAX_RTM = 140
 
-ARDUINO = serial.Serial(port='/dev/ttyACM0', baudrate=9600, timeout=.1)
-
 
 class Drone:
     def __init__(self, pos_x=WIDTH//2, pos_y=HEIGHT//2, disturbance_x=0, disturbance_y=0, color=RED, radius=7):
@@ -103,26 +101,38 @@ class Waypoint:
     def getRect(self):
         return self.draw
     
-def teensy(drone, waypoint):
-    distance = np.sqrt((drone.pos_x - waypoint.pos_x)**2 + (drone.pos_y - waypoint.pos_y)**2)
-    interacting = distance <= waypoint.radius
-    if interacting:
-        ARDUINO.write(bytes('0', 'utf-8'))
-        print("Sent 0")
-    else:
-        vibration = distance/MAX_DISTANCE * MAX_RTM
-        ARDUINO.write(bytes(str(vibration), 'utf-8'))
-        print("Sent ", vibration)
-    time.sleep(0.01)
-    # data = ARDUINO.readline()
+class Teensy:
+    def __init__(self):
+        self.port = serial.Serial(port='/dev/ttyACM0', baudrate=9600, timeout=.1)
+        self.diff_x = 0
+        self.diff_y = 0
+        self.distance = 0
+    
+    def evaluate(self, drone, waypoint):
+        self.diff_x = drone.pos_x - waypoint.pos_x
+        self.diff_y = drone.pos_y - waypoint.pos_y
+        self.distance = np.sqrt(self.diff_x**2 + self.diff_y**2)
+
+        interacting = self.distance <= waypoint.radius
+
+        if interacting:
+            self.port.write(bytes('0', 'utf-8'))
+            print("Sent 0")
+        else:
+            vibration = self.distance/MAX_DISTANCE * MAX_RTM
+            self.port.write(bytes(str(vibration), 'utf-8'))
+            print("Sent ", vibration)
+        time.sleep(0.01)
+        # data = ARDUINO.readline()
 
 
 def main():
     running = True
   
     # Define objects
-    drone = Drone(pos_x=WIDTH//2, pos_y=HEIGHT//2, disturbance_x=0, disturbance_y=4)
+    drone = Drone(pos_x=WIDTH//2, pos_y=HEIGHT//2, disturbance_x=0, disturbance_y=0)
     waypoint = Waypoint()
+    teensy = Teensy()
   
     x_displacement = 0
     y_displacement = 0
@@ -160,7 +170,7 @@ def main():
         # Communicate with Serial
         if count > 5:
             count = 0
-            teensy(drone, waypoint)
+            teensy.evaluate(drone, waypoint)
 
         # Display objects on the SCREEN
         waypoint.display()
