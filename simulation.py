@@ -3,6 +3,7 @@
 import numpy as np
 import pygame
 import serial
+import time
 
 pygame.init()
 
@@ -22,6 +23,8 @@ pygame.display.set_caption("UAV Flight")
 FPS = 30  # Used to adjust the frame rate
 CONTROL_VELOCITY = 4  # Pixels per Frame
 INTERACTION_RESET = 100
+
+ARDUINO = serial.Serial(port='/dev/ttyACM0', baudrate=9600, timeout=.1)
 
 
 class Drone:
@@ -96,6 +99,15 @@ class Waypoint:
         
     def getRect(self):
         return self.draw
+    
+def teensy(drone, waypoint):
+    interacting = np.sqrt((drone.pos_x - waypoint.pos_x)**2 + (drone.pos_y - waypoint.pos_y)**2) <= waypoint.radius
+    if interacting:
+        ARDUINO.write(bytes('0', 'utf-8'))
+    else:
+        ARDUINO.write(bytes('1', 'utf-8'))
+    time.sleep(0.05)
+    data = ARDUINO.readline()
 
 
 def main():
@@ -136,6 +148,9 @@ def main():
         # Handle Interaction
         waypoint.interaction(drone.pos_x, drone.pos_y)
 
+        # Communicate with Serial
+        teensy(drone, waypoint)
+
         # Display objects on the SCREEN
         waypoint.display()
         drone.display()
@@ -146,3 +161,4 @@ def main():
 if __name__ == "__main__":
 	main()
 	pygame.quit()
+        
