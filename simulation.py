@@ -4,6 +4,7 @@ import numpy as np
 import pygame
 import serial
 import time
+import json
 
 pygame.init()
 
@@ -107,23 +108,45 @@ class Teensy:
         self.diff_x = 0
         self.diff_y = 0
         self.distance = 0
+        self.serial_count = 0
+        self.magnitudes = {'up':'0', 'right':'0', 'down':'0', 'left':'0'}
     
     def evaluate(self, drone, waypoint):
         self.diff_x = drone.pos_x - waypoint.pos_x
         self.diff_y = drone.pos_y - waypoint.pos_y
         self.distance = np.sqrt(self.diff_x**2 + self.diff_y**2)
+        self.interacting = self.distance <= waypoint.radius
 
-        interacting = self.distance <= waypoint.radius
+        self.update_drv_magnitudes()
 
-        if interacting:
-            self.port.write(bytes('0', 'utf-8'))
-            print("Sent 0")
+    def update_drv_magnitudes(self):
+        if self.diff_x > 0:
+            self.magnitudes['left'] = str(self.diff_x/MAX_DISTANCE * (MAX_RTM - 30) + 30)
+            self.magnitudes['right'] = str(0)
         else:
-            vibration = self.distance/MAX_DISTANCE * MAX_RTM
-            self.port.write(bytes(str(vibration), 'utf-8'))
-            print("Sent ", vibration)
-        time.sleep(0.01)
-        # data = ARDUINO.readline()
+            self.magnitudes['right'] = str(-self.diff_x/MAX_DISTANCE * (MAX_RTM - 30) + 30)
+            self.magnitudes['left'] = str(0)
+
+        if self.diff_y > 0:
+            self.magnitudes['up'] = str(self.diff_y/MAX_DISTANCE * (MAX_RTM - 30) + 30)
+            self.magnitudes['down'] = str(0)
+        else:
+            self.magnitudes['down'] = str(-self.diff_y/MAX_DISTANCE * (MAX_RTM - 30) + 30)
+            self.magnitudes['up'] = str(0)
+
+    def send_serial(self):
+        data = json.dumps(self.magnitudes)
+    
+        if self.port.isOpen():
+            self.port.write(data.encode('ascii'))
+            self.port.flush()
+            try:
+                incoming = self.port.readline().decode("utf-8")
+            except Exception as e:
+                print(e)
+                pass
+        else:
+            print("opening error")
 
 
 def main():
@@ -136,8 +159,6 @@ def main():
   
     x_displacement = 0
     y_displacement = 0
-
-    count = 0
 
     while running:
         SCREEN.fill(BLACK)
@@ -168,18 +189,19 @@ def main():
         waypoint.interaction(drone.pos_x, drone.pos_y)
 
         # Communicate with Serial
-        if count > 5:
-            count = 0
+        if teensy.serial_count > 5:
+            teensy.serial_count = 0
             teensy.evaluate(drone, waypoint)
+            teensy.send_serial()
 
         # Display objects on the SCREEN
         waypoint.display()
         drone.display()
+
+        teensy.serial_count += 1
   
         pygame.display.update()
         CLOCK.tick(FPS)  # Adjusting the frame rate
-
-        count += 1
 
 if __name__ == "__main__":
 	main()
