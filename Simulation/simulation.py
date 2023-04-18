@@ -12,10 +12,10 @@ pygame.init()
 # Main File Parameters
 HAPTICS_ENABLED = False
 VISUALS_ENABLED = True
-DATA_COLLECTION_ENABLED = True
+DATA_COLLECTION_ENABLED = False
 START_PAUSED = True
 FRAME_LIMIT = 1000
-GRAB_ID = True
+GRAB_ID = False
 
 # RGB values of standard colors
 BLACK = (0, 0, 0)
@@ -232,7 +232,7 @@ def main():
     if HAPTICS_ENABLED:
         teensy = Teensy()
     if DATA_COLLECTION_ENABLED:
-        filename = 'data/' + time.strftime("%Y%m%d_%H%M%S") + '.csv'
+        filename = 'Simulation/data/' + time.strftime("%Y%m%d_%H%M%S") + '.csv'
         f = open(filename, 'w')
         writer = csv.writer(f)
         write_header(writer)
