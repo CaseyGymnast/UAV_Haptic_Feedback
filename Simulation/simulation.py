@@ -13,7 +13,7 @@ pygame.init()
 HAPTICS_ENABLED = False
 VISUALS_ENABLED = True
 DATA_COLLECTION_ENABLED = False
-START_PAUSED = True
+START_PAUSED = False
 FRAME_LIMIT = 1000
 GRAB_ID = False
 
@@ -30,7 +30,7 @@ FONT = pygame.font.Font('freesansbold.ttf', 20)
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 CLOCK = pygame.time.Clock()
 pygame.display.set_caption("UAV Flight")
-FPS = 30  # Used to adjust the frame rate
+FPS = 10  # Used to adjust the frame rate
 
 # Game Parameters
 CONTROL_VELOCITY = 4  # Pixels per Frame
@@ -232,7 +232,7 @@ def main():
     if HAPTICS_ENABLED:
         teensy = Teensy()
     if DATA_COLLECTION_ENABLED:
-        filename = 'Simulation/data/' + time.strftime("%Y%m%d_%H%M%S") + '.csv'
+        filename = '../Simulation/data/' + time.strftime("%Y%m%d_%H%M%S") + '.csv'
         f = open(filename, 'w')
         writer = csv.writer(f)
         write_header(writer)
@@ -265,8 +265,7 @@ def main():
             # Communicate with Serial
             if HAPTICS_ENABLED:
                 if frame_count % 1 == 0:
-                    teensy.evaluate(drone, waypoint)
-                    teensy.send_serial()
+                    # TODO: Ding serial bridge
 
             # Display objects on the SCREEN
             SCREEN.fill(BLACK)
